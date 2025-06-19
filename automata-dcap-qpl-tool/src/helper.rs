@@ -67,7 +67,13 @@ pub fn check_missing_collateral(
                     enclave_id_type,
                     collateral_version
                 );
-                let response = match rt.block_on(reqwest::get(req_url.clone())) {
+                let client = reqwest::Client::builder()
+                    .danger_accept_invalid_certs(true)
+                    .build()
+                    .unwrap();
+                let mut req_builder = client
+                    .get(req_url.clone());
+                let response = match rt.block_on(req_builder.send()) {
                     Ok(v) => v,
                     Err(_) => {
                         println!("Unable to get {}", req_url);
@@ -124,7 +130,14 @@ pub fn check_missing_collateral(
                     fmspc
                 );
                 println!("req_url: {:?}", req_url);
-                let response = match rt.block_on(reqwest::get(req_url.clone())) {
+
+                let client = reqwest::Client::builder()
+                    .danger_accept_invalid_certs(true)
+                    .build()
+                    .unwrap();
+                let mut req_builder = client
+                    .get(req_url.clone());
+                let response = match rt.block_on(req_builder.send()) {
                     Ok(v) => v,
                     Err(_) => {
                         println!("Unable to get {}", req_url);
@@ -208,7 +221,13 @@ pub fn check_missing_collateral(
                     pccs_url,
                     pck_ca.clone()
                 );
-                let response = match rt.block_on(reqwest::get(req_url.clone())) {
+                let client = reqwest::Client::builder()
+                    .danger_accept_invalid_certs(true)
+                    .build()
+                    .unwrap();
+                let mut req_builder = client
+                    .get(req_url.clone());
+                let response = match rt.block_on(req_builder.send()) {
                     Ok(v) => v,
                     Err(_) => {
                         println!("Unable to get {}", req_url);
