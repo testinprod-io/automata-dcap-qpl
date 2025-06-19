@@ -247,7 +247,7 @@ pub fn check_missing_collateral(
                         }
                     };
                     println!("SGX-PCK-CRL: {}", content);
-                    content
+                    hex_crl_to_pem(&content)
                 } else {
                     println!("[ERROR] {} returns {:?}, exit", req_url, response.status());
                     return;
@@ -911,7 +911,7 @@ pub fn tdx_ql_get_quote_verification_collateral(
                 }
             };
             println!("SGX-PCK-CRL: {}", content);
-            content
+            hex_crl_to_pem(&content)
         } else {
             println!("[ERROR] {} returns {:?}, exit", req_url, response.status());
             return;
