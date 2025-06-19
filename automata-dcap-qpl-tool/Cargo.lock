@@ -892,6 +892,7 @@ version = "0.1.0"
 dependencies = [
  "automata-dcap-qpl-common",
  "automata-dcap-qpl-contracts",
+ "base64 0.21.7",
  "ethers",
  "hex",
  "indexmap",

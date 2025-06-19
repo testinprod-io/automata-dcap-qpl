@@ -16,6 +16,9 @@ use openssl::x509::X509Crl;
 use std::ffi::{c_char, CStr, CString};
 use std::{str::FromStr, sync::Arc};
 
+use base64::Engine;
+use base64::engine::general_purpose;
+
 const INTEL_PCS_SUBSCRIPTION_KEY_ENV: &str = "INTEL_PCS_SUBSCRIPTION_KEY";
 
 fn get_intel_pcs_subscription_key() -> String {
@@ -375,7 +378,11 @@ pub fn sgx_ql_get_quote_config(
             .enable_all()
             .build()
             .unwrap();
-        let client = reqwest::Client::new();
+//        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap();
         let query_params = vec![
             ("cpusvn".to_string(), hex::encode(cpu_svn.cpu_svn)),
             ("pcesvn".to_string(), hex::encode(pce_svn.isv_svn.to_le_bytes())),
@@ -1177,7 +1184,7 @@ pub fn sgx_ql_get_root_ca_crl(
             println!("Unable to convert root_ca_crl");
             return;
         };
-        upsert_root_ca_crl(&private_key, rpc_url, chain_id, &crl);
+        upsert_root_ca_crl(&private_key, rpc_url.clone(), chain_id, &crl);
 
         let ret = azure::az_dcap_sgx_ql_free_root_ca_crl(root_ca_crl);
         println!("azure dcap sgx_ql_free_root_ca_crl func: {:?}", ret);
@@ -1193,7 +1200,14 @@ pub fn sgx_ql_get_root_ca_crl(
             .enable_all()
             .build()
             .unwrap();
-        let response = match rt.block_on(reqwest::get(req_url.clone())) {
+        let client = reqwest::Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap();
+        let mut req_builder = client
+            .get(req_url.clone());
+
+        let response = match rt.block_on(req_builder.send()) {
             Ok(v) => v,
             Err(_) => {
                 println!("Unable to get {}", req_url);
@@ -1209,6 +1223,25 @@ pub fn sgx_ql_get_root_ca_crl(
                 }
             };
             println!("SGX-Root-CA-Crl: {:?}", content);
+            upsert_root_ca_crl(&private_key, rpc_url.clone(), chain_id, &content);
         }
     }
+}
+
+fn hex_crl_to_pem(hex_str: &str) -> String {
+    let bytes = hex::decode(hex_str.trim().replace(' ', ""))
+        .expect("Invalid hex string");
+
+    let b64 = general_purpose::STANDARD
+        .encode(bytes)
+        .as_bytes()
+        .chunks(64)
+        .map(|chunk| std::str::from_utf8(chunk).unwrap())
+        .collect::<Vec<&str>>()
+        .join("\n");
+
+    format!(
+        "-----BEGIN X509 CRL-----\n{}\n-----END X509 CRL-----\n",
+        b64
+    )
 }
