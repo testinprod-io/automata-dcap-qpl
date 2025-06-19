@@ -1223,7 +1223,7 @@ pub fn sgx_ql_get_root_ca_crl(
                 }
             };
             println!("SGX-Root-CA-Crl: {:?}", content);
-            upsert_root_ca_crl(&private_key, rpc_url.clone(), chain_id, &content);
+            upsert_root_ca_crl(&private_key, rpc_url.clone(), chain_id, &hex_crl_to_pem(&content));
         }
     }
 }
